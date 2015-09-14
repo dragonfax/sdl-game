@@ -96,7 +96,7 @@ func main() {
 
 	fpsTimer := time.NewTicker(time.Second / 60)
 
-	newNumTicker := time.NewTicker(time.Second * 2)
+	newNumTicker := time.NewTicker(time.Second / 2)
 
 	go func() {
 		num := NewNum()
