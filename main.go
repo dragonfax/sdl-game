@@ -14,6 +14,30 @@ var BLUE = sdl.Color{0, 0, 255, 255}
 var BLACK = sdl.Color{0, 0, 0, 255}
 var BACKGROUND_COLOR = BLACK
 
+var font *ttf.Font
+
+type Num struct {
+	n int32
+	s *sdl.Surface
+	r sdl.Rect
+}
+
+func NewNum() *Num {
+	num := &Num{n: rand.Int31n(10)}
+	s, err := font.RenderUTF8_Solid(fmt.Sprintf("%d", num.n), BLUE)
+	if err != nil {
+		panic(err)
+	}
+	num.s = s
+	num.s.GetClipRect(&num.r)
+	num.r.Y += 300 - (num.r.H / 2)
+	return num
+}
+
+func (num *Num) Draw(surface *sdl.Surface) {
+	num.s.Blit(nil, surface, &num.r)
+}
+
 func main() {
 	runtime.LockOSThread()
 	err := sdl.Init(sdl.INIT_EVERYTHING)
@@ -42,7 +66,7 @@ func main() {
 	var bgRect sdl.Rect
 	surface.GetClipRect(&bgRect)
 
-	font, err := ttf.OpenFont("/Library/Fonts/Arial.ttf", 128)
+	font, err = ttf.OpenFont("/Library/Fonts/Arial.ttf", 128)
 	if err != nil {
 		panic(err)
 	}
@@ -50,23 +74,28 @@ func main() {
 
 	fpsTimer := time.NewTicker(time.Second / 60)
 
+	newNumTicker := time.NewTicker(time.Second)
+
+	nums := make(map[*Num]*Num)
+
+	go func() {
+		for {
+			<-newNumTicker.C
+			num := NewNum()
+			nums[num] = num
+		}
+	}()
+
 MainLoop:
 	for {
 		select {
 		case <-fpsTimer.C:
-			text, err := font.RenderUTF8_Solid(fmt.Sprintf("%d", rand.Int31n(10)), BLUE)
-			if err != nil {
-				panic(err)
-			}
 
 			surface.FillRect(&bgRect, BACKGROUND_COLOR.Uint32())
 
-			// rect := sdl.Rect{0, 0, 200, 200}
-			// surface.FillRect(&rect, 0xffff0000)
-			var rect sdl.Rect
-			text.GetClipRect(&rect)
-			rect.Y += 300 - (rect.H / 2)
-			text.Blit(nil, surface, &rect)
+			for _, num := range nums {
+				num.Draw(surface)
+			}
 
 			window.UpdateSurface()
 		default:
