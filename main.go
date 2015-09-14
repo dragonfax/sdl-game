@@ -37,11 +37,11 @@ func NewNum() *Num {
 }
 
 func (num *Num) Think() {
-	ticker := time.NewTicker(time.Second / 10)
+	ticker := time.NewTicker(time.Second / 200)
 	for {
 		select {
 		case <-ticker.C:
-			num.pos += 10
+			num.pos += 1
 		}
 	}
 }
@@ -88,17 +88,21 @@ func main() {
 
 	fpsTimer := time.NewTicker(time.Second / 60)
 
-	newNumTicker := time.NewTicker(time.Second)
+	newNumTicker := time.NewTicker(time.Second * 2)
 
 	nums := make(map[*Num]*Num)
 
 	go func() {
+		num := NewNum()
+		nums[num] = num
 		for {
 			<-newNumTicker.C
 			num := NewNum()
 			nums[num] = num
 		}
 	}()
+
+	inputTimer := time.NewTicker(time.Second / 100)
 
 MainLoop:
 	for {
@@ -112,7 +116,7 @@ MainLoop:
 			}
 
 			window.UpdateSurface()
-		default:
+		case <-inputTimer.C:
 			for e := sdl.PollEvent(); e != nil; e = sdl.PollEvent() {
 				switch t := e.(type) {
 				case *sdl.QuitEvent:
