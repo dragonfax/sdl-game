@@ -15,6 +15,7 @@ var BLACK = sdl.Color{0, 0, 0, 255}
 var BACKGROUND_COLOR = BLACK
 
 var font *ttf.Font
+var nums = make(map[*Num]*Num)
 
 type Num struct {
 	n   int32
@@ -38,10 +39,17 @@ func NewNum() *Num {
 
 func (num *Num) Think() {
 	ticker := time.NewTicker(time.Second / 200)
+THINK:
 	for {
 		select {
 		case <-ticker.C:
 			num.pos += 1
+
+			if num.pos >= 400 {
+				// self destruct
+				delete(nums, num)
+				break THINK
+			}
 		}
 	}
 }
@@ -89,8 +97,6 @@ func main() {
 	fpsTimer := time.NewTicker(time.Second / 60)
 
 	newNumTicker := time.NewTicker(time.Second * 2)
-
-	nums := make(map[*Num]*Num)
 
 	go func() {
 		num := NewNum()
