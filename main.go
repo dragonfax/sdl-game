@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"runtime"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 )
 
 var BLUE = sdl.Color{0, 0, 255, 255}
+var BLACK = sdl.Color{0, 0, 0, 255}
+var BACKGROUND_COLOR = BLACK
 
 func main() {
 	runtime.LockOSThread()
@@ -36,6 +39,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	var bgRect sdl.Rect
+	surface.GetClipRect(&bgRect)
 
 	font, err := ttf.OpenFont("/Library/Fonts/Arial.ttf", 128)
 	if err != nil {
@@ -45,13 +50,16 @@ func main() {
 
 	fpsTimer := time.NewTicker(time.Second / 60)
 
+MainLoop:
 	for {
 		select {
 		case <-fpsTimer.C:
-			text, err := font.RenderUTF8_Solid("8", BLUE)
+			text, err := font.RenderUTF8_Solid(fmt.Sprintf("%d", rand.Int31n(10)), BLUE)
 			if err != nil {
 				panic(err)
 			}
+
+			surface.FillRect(&bgRect, BACKGROUND_COLOR.Uint32())
 
 			// rect := sdl.Rect{0, 0, 200, 200}
 			// surface.FillRect(&rect, 0xffff0000)
@@ -61,9 +69,20 @@ func main() {
 			text.Blit(nil, surface, &rect)
 
 			window.UpdateSurface()
+		default:
+			for e := sdl.PollEvent(); e != nil; e = sdl.PollEvent() {
+				switch t := e.(type) {
+				case *sdl.QuitEvent:
+					break MainLoop
+				case *sdl.KeyDownEvent:
+					if t.Keysym.Sym == sdl.K_ESCAPE {
+						break MainLoop
+					}
+				}
+			}
 		}
 
 	}
 
-	fmt.Println("main thread existing")
+	fmt.Println("main thread exiting")
 }
