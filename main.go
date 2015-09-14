@@ -17,9 +17,10 @@ var BACKGROUND_COLOR = BLACK
 var font *ttf.Font
 
 type Num struct {
-	n int32
-	s *sdl.Surface
-	r sdl.Rect
+	n   int32
+	s   *sdl.Surface
+	r   sdl.Rect
+	pos int32
 }
 
 func NewNum() *Num {
@@ -31,11 +32,24 @@ func NewNum() *Num {
 	num.s = s
 	num.s.GetClipRect(&num.r)
 	num.r.Y += 300 - (num.r.H / 2)
+	go num.Think()
 	return num
 }
 
+func (num *Num) Think() {
+	ticker := time.NewTicker(time.Second / 10)
+	for {
+		select {
+		case <-ticker.C:
+			num.pos += 10
+		}
+	}
+}
+
 func (num *Num) Draw(surface *sdl.Surface) {
-	num.s.Blit(nil, surface, &num.r)
+	rect := num.r
+	rect.X += num.pos
+	num.s.Blit(nil, surface, &rect)
 }
 
 func main() {
